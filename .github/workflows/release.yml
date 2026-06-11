@@ -21,25 +21,28 @@ jobs:
         run: |
           $lastBuild = try { curl https://api.github.com/repos/ltguillaume/jhead-win64/releases/latest | ConvertFrom-Json | Select -exp tag_name } catch { echo 0 }
           $latestTag = git rev-parse --short HEAD
-          if ($lastBuild -eq $latestTag) {
+          $latestVer = Select-String -Path .\jhead.c -Pattern 'JHEAD_VERSION \"(.*?)\"'
+          $latestVer = $latestVer.Matches.Groups[1].Value +"-"+ $latestTag
+          if ($latestVer -eq $lastBuild) {
             echo "No new version"
           } else {
-            "TAG=$latestTag" | Out-File -FilePath $env:GITHUB_ENV -Append
+            echo "New version: $latestVer"
+            "VER=$latestVer" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
 
       - name: Set up Developer Command Prompt
-        if: ${{ env.TAG != '' }}
+        if: ${{ env.VER != '' }}
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build executable
-        if: ${{ env.TAG != '' }}
+        if: ${{ env.VER != '' }}
         run: .\make.bat
 
       - name: Create release
-        if: ${{ env.TAG != '' }}
+        if: ${{ env.VER != '' }}
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: '${{ env.TAG }}'
-          name: 'JHEAD for Windows (${{ env.TAG }})'
-          body: 'Created from https://github.com/Matthias-Wandel/jhead/tree/${{ env.TAG }}'
+          tag_name: '${{ env.VER }}'
+          name: 'JHEAD for Windows (${{ env.VER }})'
+          body: 'Created from https://github.com/Matthias-Wandel/jhead/tree/${{ env.VER }}'
           files: jhead.exe
