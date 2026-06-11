@@ -33,6 +33,8 @@ jobs:
       - name: Set up Developer Command Prompt
         if: ${{ env.VER != '' }}
         uses: ilammy/msvc-dev-cmd@v1
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
       - name: Build executable
         if: ${{ env.VER != '' }}
