@@ -27,6 +27,7 @@ jobs:
             echo "No new version"
           } else {
             echo "New version: $latestVer"
+            "TAG=$latestTag" | Out-File -FilePath $env:GITHUB_ENV -Append
             "VER=$latestVer" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
 
@@ -46,5 +47,5 @@ jobs:
         with:
           tag_name: '${{ env.VER }}'
           name: 'JHEAD for Windows (${{ env.VER }})'
-          body: 'Created from https://github.com/Matthias-Wandel/jhead/tree/${{ env.VER }}'
+          body: 'Created from https://github.com/Matthias-Wandel/jhead/tree/${{ env.TAG }}'
           files: jhead.exe
