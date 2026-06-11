@@ -1,6 +1,9 @@
 name: Release
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 7 */7 * *'
 
 permissions:
   contents: write
@@ -14,25 +17,26 @@ jobs:
         with:
           repository: 'Matthias-Wandel/jhead'
 
-      - name: Get commit sha for release tag
+      - name: Check for new version
         run: |
-          $commitSha = git rev-parse --short HEAD
-          "TAG=$commitSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $lastBuild = try { curl https://api.github.com/repos/ltguillaume/jhead-win64/releases/latest | ConvertFrom-Json | Select -exp tag_name } catch { echo 0 }
+          $latestTag = git rev-parse --short HEAD
+          if ($lastBuild -eq $latestTag) {
+            echo "No new version"
+          } else {
+            "TAG=$latestTag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
 
       - name: Set up Developer Command Prompt
+        if: ${{ env.TAG != '' }}
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build executable
+        if: ${{ env.TAG != '' }}
         run: .\make.bat
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jhead-win64
-          path: jhead.exe
-          retention-days: 7
-
       - name: Create release
+        if: ${{ env.TAG != '' }}
         uses: softprops/action-gh-release@v3
         with:
           tag_name: '${{ env.TAG }}'
